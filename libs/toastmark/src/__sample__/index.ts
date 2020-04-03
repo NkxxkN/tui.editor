@@ -46,8 +46,6 @@ cm.on('change', (editor, changeObj) => {
     const html = writer.render(doc.getRootNode());
     htmlEl.innerText = html;
 
-    console.log(removedNodeRange);
-
     if (!removedNodeRange) {
       previewEl.innerHTML = html;
     } else {
