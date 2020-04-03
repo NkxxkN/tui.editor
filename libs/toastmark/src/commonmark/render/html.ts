@@ -150,6 +150,9 @@ export class HtmlRenderer extends Renderer {
         return;
       }
     }
+    if (node.hasReferenceDefs) {
+      return;
+    }
     if (entering) {
       this.cr();
       this.tag('p', this.attrs(node));
