@@ -236,7 +236,7 @@ class MarkdownEditor extends CodeMirrorExt {
       return;
     }
 
-    changed.forEach(this._markNodes);
+    changed.forEach(editResult => this._markNodes(editResult));
   }
 
   _markNodes(editResult) {
