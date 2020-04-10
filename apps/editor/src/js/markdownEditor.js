@@ -236,53 +236,55 @@ class MarkdownEditor extends CodeMirrorExt {
       return;
     }
 
-    /* eslint-disable max-depth */
-    changed.forEach(editResult => {
-      const { nodes } = editResult;
+    changed.forEach(this._markNodes);
+  }
 
-      if (nodes.length) {
-        const [editFromPos] = nodes[0].sourcepos;
-        const [, editToPos] = nodes[nodes.length - 1].sourcepos;
-        const editFrom = { line: editFromPos[0] - 1, ch: editFromPos[1] - 1 };
-        const editTo = { line: editToPos[0] - 1, ch: editToPos[1] };
-        const marks = this.cm.findMarks(editFrom, editTo);
+  _markNodes(editResult) {
+    const { nodes } = editResult;
 
-        for (const mark of marks) {
-          mark.clear();
-        }
+    if (nodes.length) {
+      const [editFromPos] = nodes[0].sourcepos;
+      const [, editToPos] = nodes[nodes.length - 1].sourcepos;
+      const editFrom = { line: editFromPos[0] - 1, ch: editFromPos[1] - 1 };
+      const editTo = { line: editToPos[0] - 1, ch: editToPos[1] };
+      const marks = this.cm.findMarks(editFrom, editTo);
 
-        for (const parent of nodes) {
-          const walker = parent.walker();
-          let event = walker.next();
+      for (const mark of marks) {
+        mark.clear();
+      }
 
-          while (event) {
-            const { node, entering } = event;
+      for (const parent of nodes) {
+        const walker = parent.walker();
+        let event = walker.next();
 
-            if (entering) {
-              const { type, sourcepos } = node;
-              const [startPosition, endPosition] = sourcepos;
-              const [startLine, startCh] = startPosition;
-              const [endLine, endCh] = endPosition;
-              const start = { line: startLine - 1, ch: startCh - 1 };
-              const end = { line: endLine - 1, ch: endCh };
-              const extraNode = tokenTypes[type];
+        while (event) {
+          const { node, entering } = event;
 
-              if (type === 'heading') {
-                this.cm.markText(start, end, { className: `cm-header cm-header-${node.level}` });
-              } else if (extraNode) {
-                this.cm.markText(start, end, { className: `cm-${extraNode}` });
-              } else if (type === 'image' || type === 'link') {
-                this._markTextInLinkOrImage(node, start, end);
-              } else if (type === 'item') {
-                this._markTextInListItem(node, start, end);
-              }
+          /* eslint-disable max-depth */
+          if (entering) {
+            const { type, sourcepos } = node;
+            const [startPosition, endPosition] = sourcepos;
+            const [startLine, startCh] = startPosition;
+            const [endLine, endCh] = endPosition;
+            const start = { line: startLine - 1, ch: startCh - 1 };
+            const end = { line: endLine - 1, ch: endCh };
+            const extraNode = tokenTypes[type];
+
+            if (type === 'heading') {
+              this.cm.markText(start, end, { className: `cm-header cm-header-${node.level}` });
+            } else if (extraNode) {
+              this.cm.markText(start, end, { className: `cm-${extraNode}` });
+            } else if (type === 'image' || type === 'link') {
+              this._markTextInLinkOrImage(node, start, end);
+            } else if (type === 'item') {
+              this._markTextInListItem(node, start, end);
             }
-            event = walker.next();
           }
+          /* eslint-enable max-depth */
+          event = walker.next();
         }
       }
-    });
-    /* eslint-enable max-depth */
+    }
   }
 
   _markTextInLinkOrImage(node, start, end) {

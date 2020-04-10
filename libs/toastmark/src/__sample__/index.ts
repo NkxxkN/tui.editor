@@ -35,13 +35,13 @@ type TokenTypes = typeof tokenTypes;
 
 cm.on('change', (editor, changeObj) => {
   const { from, to, text } = changeObj;
-  const editResult = doc.editMarkdown(
+  const changed = doc.editMarkdown(
     [from.line + 1, from.ch + 1],
     [to.line + 1, to.ch + 1],
     text.join('\n')
   );
 
-  editResult.forEach(result => {
+  changed.forEach(result => {
     const { nodes, removedNodeRange } = result;
     const html = writer.render(doc.getRootNode());
     htmlEl.innerText = html;

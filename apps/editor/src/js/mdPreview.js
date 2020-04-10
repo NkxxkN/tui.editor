@@ -51,46 +51,48 @@ class MarkdownPreview extends Preview {
   }
 
   update(changed) {
-    changed.forEach(editResult => {
-      const { nodes, removedNodeRange } = editResult;
-      const contentEl = this._previewContent;
-      const newHtml = this.eventManager.emitReduce(
-        'convertorAfterMarkdownToHtmlConverted',
-        nodes.map(node => htmlRenderer.render(node)).join('')
-      );
+    changed.forEach(this.replaceRangeNodes);
+    this.eventManager.emit('previewRenderAfter', this);
+  }
 
-      if (!removedNodeRange) {
-        contentEl.insertAdjacentHTML('afterbegin', newHtml);
-      } else {
-        const [startNodeId, endNodeId] = removedNodeRange;
-        const startEl = contentEl.querySelector(`[data-nodeid="${startNodeId}"]`);
-        const endEl = contentEl.querySelector(`[data-nodeid="${endNodeId}"]`);
+  replaceRangeNodes(editResult) {
+    const { nodes, removedNodeRange } = editResult;
+    const contentEl = this._previewContent;
+    const newHtml = this.eventManager.emitReduce(
+      'convertorAfterMarkdownToHtmlConverted',
+      nodes.map(node => htmlRenderer.render(node)).join('')
+    );
 
-        if (startEl) {
-          startEl.insertAdjacentHTML('beforebegin', newHtml);
-          let el = startEl;
+    if (!removedNodeRange) {
+      contentEl.insertAdjacentHTML('afterbegin', newHtml);
+    } else {
+      const [startNodeId, endNodeId] = removedNodeRange;
+      const startEl = contentEl.querySelector(`[data-nodeid="${startNodeId}"]`);
+      const endEl = contentEl.querySelector(`[data-nodeid="${endNodeId}"]`);
 
-          while (el !== endEl) {
-            const nextEl = el.nextElementSibling;
+      if (startEl) {
+        startEl.insertAdjacentHTML('beforebegin', newHtml);
+        let el = startEl;
 
-            el.parentNode.removeChild(el);
-            removeOffsetInfoByNode(el);
-            el = nextEl;
-          }
-          if (el.parentNode) {
-            domUtils.remove(el);
-            removeOffsetInfoByNode(el);
-          }
+        while (el !== endEl) {
+          const nextEl = el.nextElementSibling;
+
+          el.parentNode.removeChild(el);
+          removeOffsetInfoByNode(el);
+          el = nextEl;
+        }
+        if (el.parentNode) {
+          domUtils.remove(el);
+          removeOffsetInfoByNode(el);
         }
       }
+    }
 
-      const codeBlockEls = this.getCodeBlockElements(nodes.map(node => node.id));
+    const codeBlockEls = this.getCodeBlockElements(nodes.map(node => node.id));
 
-      if (codeBlockEls.length) {
-        this.lazyRunner.run('invokeCodeBlock', codeBlockEls);
-      }
-    });
-    this.eventManager.emit('previewRenderAfter', this);
+    if (codeBlockEls.length) {
+      this.lazyRunner.run('invokeCodeBlock', codeBlockEls);
+    }
   }
 
   /**
